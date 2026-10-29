@@ -87,3 +87,83 @@ VALUES (1, 'Duplicate', 'duplicate@example.com', 1000);
 
 INSERT INTO accounts
 VALUES (3, NULL, 'c@example.com', 1000);
+
+
+-- TEST 3: UNIQUE
+-- Email cannot be duplicated
+-- Expected: ERROR
+
+INSERT INTO accounts
+VALUES (3, 'Account C', 'a@example.com', 1000);
+
+-- TEST 4: CHECK
+-- Balance cannot be negative
+-- Expected: ERROR
+
+UPDATE accounts
+SET balance = -500
+WHERE id = 1;
+
+
+-- TEST 5: CHECK
+-- Transaction amount must be positive
+-- Expected: ERROR
+
+INSERT INTO transactions (id, account_id, amount)
+VALUES (103, 1, -100);
+
+
+-- TEST 6: FOREIGN KEY
+-- Account must exist
+-- Expected: ERROR
+
+INSERT INTO transactions (id, account_id, amount)
+VALUES (104, 999, 500);
+
+
+-- TEST 7: DEFAULT
+-- Omitted status becomes PENDING
+-- Expected: SUCCESS
+
+INSERT INTO transactions (id, account_id, amount)
+VALUES (105, 1, 250.00);
+
+SELECT * FROM transactions
+WHERE id = 105;
+
+-- Expected status: PENDING
+
+
+-- TEST 8: VALID UPDATE
+-- Positive balance remains valid
+-- Expected: SUCCESS
+
+UPDATE accounts
+SET balance = balance - 500
+WHERE id = 1
+  AND balance >= 500;
+
+SELECT * FROM accounts;
+
+-- FINAL VALIDATION
+
+SELECT 'FINAL ACCOUNTS' AS scenario;
+SELECT * FROM accounts;
+
+SELECT 'FINAL TRANSACTIONS' AS scenario;
+SELECT * FROM transactions;
+
+SELECT
+    SUM(balance) AS total_balance
+FROM accounts;
+
+-- Expected total balance: 7500.00
+
+
+--NOTE
+
+-- Consistency does not mean every SQL query must succeed. It means the database must preserve the rules that define valid data.
+
+-- For example, if Account A has ₹5,000, a withdrawal of ₹6,000 should not leave a negative balance when overdrafts are prohibited. The CHECK constraint protects the balance, while the update condition prevents an invalid withdrawal from being attempted.
+
+-- One important limitation: a database constraint cannot enforce every business rule. For example, ensuring that every debit has a corresponding credit requires transaction logic and appropriate application or database design.
