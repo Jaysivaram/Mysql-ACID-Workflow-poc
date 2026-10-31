@@ -78,4 +78,47 @@ SELECT * FROM accounts WHERE id = 1;
 
 
 
+----CASE 1 READ COMMITED(To prevent Dirty READ)
+
+-- In T1 start again
+
+START TRANSACTION;
+
+UPDATE accounts
+SET balance = 2000
+WHERE id = 1;
+
+-- Do not commit yet!
+
+-- In T2 set up the session transaction level
+
+SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
+
+START TRANSACTION;
+
+-- execute in T2 you will see last commited  value because ongoing tranction not yet commited
+
+SELECT * FROM accounts WHERE id = 1;
+
+
+-- Commit T1
+
+COMMIT;
+
+
+-- execute in T2 you will initial value because tranction is commited
+
+SELECT * FROM accounts WHERE id = 1;
+
+
+
+
+
+
+
+
+
+
+
+
 
