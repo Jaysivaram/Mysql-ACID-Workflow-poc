@@ -112,13 +112,106 @@ SELECT * FROM accounts WHERE id = 1;
 
 
 
+-- CASE 3: REPEATABLE READ
+--
+-- REPEATABLE READ ensures that within the same transaction,
+-- repeated reads of the same row return the same data.
+--
+-- Changes made by other transactions are not visible to the
+-- current transaction until it is completed (committed or rolled back).
+--
+-- This provides a consistent snapshot of the data throughout
+-- the transaction, preventing non-repeatable reads.
+
+
+-- T1
+
+START TRANSACTION;
+
+SELECT balance FROM accounts WHERE id = 1;
+
+-- example you will see 2000 
+
+
+-- T2
+
+START TRANSACTION;
+
+UPDATE accounts SET balance = 3000 WHERE id = 1;
+
+COMMIT;
+
+
+-- T1 
+
+SELECT balance FROM accounts WHERE id = 1;
+
+-- still you will see last read value as 2000 
 
 
 
+-- CASE 4: SERIALIZABLE
+--
+-- SERIALIZABLE is the strictest transaction isolation level.
+--
+-- It ensures that concurrent transactions behave as if they
+-- were executed one after another (sequentially).
+--
+-- It uses locking mechanisms to prevent conflicting transactions
+-- from accessing or modifying data in ways that could cause
+-- inconsistencies.
+--
+-- If one transaction holds a lock, another transaction may have
+-- to wait until the first transaction is committed or rolled back
+-- before proceeding.
+--
+-- This provides the highest level of isolation but can reduce
+-- concurrency and database performance.
+
+
+-- RUN IN BOTH T1 and T2
+
+USE isolation_poc;
+
+SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+
+
+-- T1
+
+START TRANSACTION;
+
+SELECT *
+FROM accounts
+WHERE id = 1;
+
+-- T2
+
+START TRANSACTION;
+
+UPDATE accounts
+SET balance = 4000
+WHERE id = 1;
+
+-- This update will wait Because Session A's SELECT under SERIALIZABLE isolation takes a shared lock on the selected row. Session B needs an exclusive lock to update that row.
+
+-- T1
+
+COMMIT;
+
+-- T2 Observe the Result and updates automatically but wont be commited
+
+COMMIT;
 
 
 
+--- EXTRA
 
 
+-- Summary — Understand the difference
 
+-- Problem	What goes wrong?
 
+-- Dirty Read	Reads uncommitted data.
+-- Non-Repeatable Read	Same row returns different values.
+-- Phantom Read	Same query returns a different set of rows.
+-- Lost Update	One transaction overwrites another update.
